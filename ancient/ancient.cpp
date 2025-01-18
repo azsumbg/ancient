@@ -25,7 +25,7 @@ int dll::RANDiT::operator() (int min, int max)
 
 //PROTON ****************************
 
-dll::PROTON::PROTON(float _sx = 0, float _sy = 0, float _width = 1.0f, float _height = 1.0f)
+dll::PROTON::PROTON(float _sx, float _sy, float _width, float _height)
 {
 	start.x = _sx;
 	start.y = _sy;
@@ -364,7 +364,7 @@ size_t dll::PROTON_MESH::size() const
 
 dll::PROTON& dll::PROTON_MESH::operator[](size_t index)
 {
-	PROTON failed{};
+	static PROTON failed{};
 	if (index < next_position)return(*(m_ptr + index));
 	else return failed;
 }
@@ -484,7 +484,7 @@ void dll::SHOT::Release()
 
 // EVIL ******************************
 
-dll::EVIL::EVIL(uint8_t type, float where_x, float where_y) :CREATURE(type, where_x, where_y) {};
+dll::EVIL::EVIL(uint8_t type, float where_x, float where_y) :CREATURE(where_x, where_y, type) {};
 
 bool dll::EVIL::Move(float gear, float targ_x, float targ_y)
 {
@@ -554,11 +554,13 @@ dll::PROT_POINT dll::EVIL::AINextMove(PROTON_MESH& army, float hero_x, float her
 		if (abs(army[i].start.x - hero_x) <= 150 && abs(army[i].start.y - hero_y) <= 150)return PROT_POINT{ hero_x,hero_y };
 		else
 		{
-			if (army[i].start.x < hero_x)return PROT_POINT{ army[i].start.x + class_rand(20.0f,100.0f),ground };
-			else if (army[i].start.x > hero_x)return PROT_POINT{ army[i].start.x - class_rand(20.0f,100.0f),ground };
-			else return PROT_POINT{ army[i].start.x,ground };
+			if (army[i].start.x < hero_x)return PROT_POINT{ army[i].start.x + (float)(class_rand(20, 100)),ground };
+			else if (army[i].start.x > hero_x)return PROT_POINT{ army[i].start.x - (float)(class_rand(20,100)), ground };
+			else return PROT_POINT{ army[i].start.x, ground };
 		}
 	}
+
+	return PROT_POINT{ 0,0 };
 }
 void dll::EVIL::Release()
 {
@@ -569,7 +571,7 @@ void dll::EVIL::Release()
 
 // HERO ****************************
 
-dll::HERO::HERO(float where_x, float where_y) :CREATURE(hero_flag, where_x, where_y) {};
+dll::HERO::HERO(float where_x, float where_y) :CREATURE(where_x, where_y, hero_flag) {};
 
 bool dll::HERO::Move(float gear, float targ_x, float targ_y)
 {
