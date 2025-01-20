@@ -157,7 +157,7 @@ void dll::CREATURE::SetPathInfo(float to_where_x, float to_where_y)
 		vert_line = true;
 		return;
 	}
-	else if (move_ex < move_x && move_ex - start.x <= 0)
+	else if (move_ex < move_x &&  start.x - move_ex <= 0)
 	{
 		vert_line = true;
 		return;
