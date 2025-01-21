@@ -92,7 +92,7 @@ dll::CREATURE::CREATURE(float first_x, float first_y, uint8_t type) :PROTON(firs
 
 	case evil1_flag:
 		NewDims(20.0f, 50.0f);
-		my_speed = 1.0f;
+		my_speed = 0.5f;
 		strenght = 8;
 		lifes = 80;
 		attack_delay = 140;
@@ -102,7 +102,7 @@ dll::CREATURE::CREATURE(float first_x, float first_y, uint8_t type) :PROTON(firs
 
 	case evil2_flag:
 		NewDims(25.0f, 50.0f);
-		my_speed = 1.1f;
+		my_speed = 0.6f;
 		strenght = 9;
 		lifes = 90;
 		attack_delay = 180;
@@ -122,7 +122,7 @@ dll::CREATURE::CREATURE(float first_x, float first_y, uint8_t type) :PROTON(firs
 
 	case evil_med_flag:
 		NewDims(30.0f, 60.0f);
-		my_speed = 1.0f;
+		my_speed = 0.5f;
 		strenght = 1;
 		lifes = 50;
 		attack_delay = 60;
@@ -134,7 +134,7 @@ dll::CREATURE::CREATURE(float first_x, float first_y, uint8_t type) :PROTON(firs
 dll::CREATURE::CREATURE(float first_x, float first_y, float end_x, float end_y) :PROTON(first_x, first_y, 10.0f, 15.0f)
 {
 	my_type = shot_flag;
-	my_speed = 8.0f;
+	my_speed = 4.0f;
 	max_frames = 7;
 	frame_delay = 10;
 	SetPathInfo(end_x, end_y);
@@ -556,7 +556,12 @@ dll::PROT_POINT dll::EVIL::AINextMove(PROTON_MESH& army, float hero_x, float her
 		{
 			if (army[i].start.x < hero_x)return PROT_POINT{ army[i].start.x + (float)(class_rand(20, 100)),ground };
 			else if (army[i].start.x > hero_x)return PROT_POINT{ army[i].start.x - (float)(class_rand(20,100)), ground };
-			else return PROT_POINT{ army[i].start.x, ground };
+			else
+			{
+				if (army[i].start.y > hero_y)return PROT_POINT{ army[i].start.x, sky };
+				else if (army[i].start.y < hero_y) return PROT_POINT{ army[i].start.x, ground };
+				else return PROT_POINT{ hero_x, hero_y };
+			}
 		}
 	}
 
