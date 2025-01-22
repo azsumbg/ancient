@@ -152,22 +152,12 @@ void dll::CREATURE::SetPathInfo(float to_where_x, float to_where_y)
 	hor_line = false;
 	vert_line = false;
 
-	if (move_ex > move_x && move_ex - end.x <= 0)
+	if (move_ex >= move_x && move_ex <= end.x)
 	{
 		vert_line = true;
 		return;
 	}
-	else if (move_ex < move_x &&  start.x - move_ex <= 0)
-	{
-		vert_line = true;
-		return;
-	}
-	else if (move_ex == move_x)
-	{
-		vert_line = true;
-		return;
-	}
-
+	
 	if (move_ey - start.y == 0 || move_ey - end.y == 0)
 	{
 		hor_line = true;
@@ -344,9 +334,10 @@ void dll::PROTON_MESH::remove(size_t index)
 	{
 		PROTON* temp_ptr{ new PROTON[next_position - 1] };
 
-		for (size_t i = 0; i < next_position; ++i)
+		for (size_t i = 0; i < next_position - 1; ++i)
 		{
-			if (i != index)(*(temp_ptr + i)) = (*(m_ptr + i));
+			if (i < index)(*(temp_ptr + i)) = (*(m_ptr + i));
+			else (*(temp_ptr + i)) = (*(m_ptr + i + 1));
 		}
 		max_size = next_position - 1;
 		delete[]m_ptr;
@@ -419,14 +410,14 @@ bool dll::SHOT::Move(float gear, float targ_x, float targ_y)
 		{
 			start.y += now_speed;
 			SetEdges();
-			if (end.y <= ground)return true;
+			if (end.y <= ground && end.y <= move_ey)return true;
 			else return false;
 		}
 		else if (start.y > move_ey)
 		{
 			start.y -= now_speed;
 			SetEdges();
-			if (start.y >= sky)return true;
+			if (start.y >= sky && start.y >= move_ey)return true;
 			else return false;
 		}
 		else return false;
@@ -437,14 +428,14 @@ bool dll::SHOT::Move(float gear, float targ_x, float targ_y)
 		{
 			start.x += now_speed;
 			SetEdges();
-			if (end.x <= scr_width)return true;
+			if (end.x <= scr_width && end.x <= move_ex)return true;
 			else return false;
 		}
 		else if (start.x > move_ex)
 		{
 			start.x -= now_speed;
 			SetEdges();
-			if (start.x >= 0)return true;
+			if (start.x >= 0 && start.x >= move_ex)return true;
 			else return false;
 		}
 		else return false;
@@ -455,7 +446,7 @@ bool dll::SHOT::Move(float gear, float targ_x, float targ_y)
 		start.x += now_speed;
 		start.y = start.x * slope + intercept;
 		SetEdges();
-		if (end.x <= scr_width)return true;
+		if (end.x <= scr_width && end.x <= move_ex)return true;
 		else return false;
 	}
 	else if (start.x > move_ex)
@@ -463,7 +454,7 @@ bool dll::SHOT::Move(float gear, float targ_x, float targ_y)
 		start.x -= now_speed;
 		start.y = start.x * slope + intercept;
 		SetEdges();
-		if (start.x >= 0)return true;
+		if (start.x >= 0 && start.x >= move_ex)return true;
 		else return false;
 	}
 
@@ -495,17 +486,17 @@ bool dll::EVIL::Move(float gear, float targ_x, float targ_y)
 	{
 		if (start.y < targ_y)
 		{
+			if (end.y + now_speed >= ground)return false;
 			start.y += now_speed;
 			SetEdges();
-			if (end.y <= ground)return true;
-			else return false;
+			return true;
 		}
 		else if (start.y > targ_y)
 		{
+			if (start.y - now_speed <= sky)return false;
 			start.y -= now_speed;
 			SetEdges();
-			if (start.y >= sky)return true;
-			else return false;
+			return true;
 		}
 		else return false;
 	}
@@ -513,37 +504,38 @@ bool dll::EVIL::Move(float gear, float targ_x, float targ_y)
 	{
 		if (start.x < targ_x)
 		{
+			if (end.x + now_speed >= scr_width)return true;
 			start.x += now_speed;
 			SetEdges();
-			if (end.x <= scr_width)return true;
-			else return false;
+			return true;
 		}
 		else if (start.x > targ_x)
 		{
+			if (start.x - now_speed <= 0)return false;
 			start.x -= now_speed;
 			SetEdges();
-			if (start.x >= 0)return true;
-			else return false;
+			return true;
 		}
 		else return false;
 	}
 
 	if (start.x < targ_x)
 	{
+		if (end.x + now_speed >= scr_width)return false;
 		start.x += now_speed;
 		start.y = start.x * slope + intercept;
 		SetEdges();
-		if (end.x <= scr_width)return true;
-		else return false;
+		return true;
 	}
 	else if (start.x > targ_x)
 	{
+		if (start.x - now_speed <= 0)return false;
 		start.x -= now_speed;
 		start.y = start.x * slope + intercept;
 		SetEdges();
-		if (start.x >= 0)return true;
-		else return false;
+		return true;
 	}
+	else return false;
 	
 	return false;
 }
@@ -554,13 +546,25 @@ dll::PROT_POINT dll::EVIL::AINextMove(PROTON_MESH& army, float hero_x, float her
 		if (abs(army[i].start.x - hero_x) <= 150 && abs(army[i].start.y - hero_y) <= 150)return PROT_POINT{ hero_x,hero_y };
 		else
 		{
-			if (army[i].start.x < hero_x)return PROT_POINT{ army[i].start.x + (float)(class_rand(20, 100)),ground };
-			else if (army[i].start.x > hero_x)return PROT_POINT{ army[i].start.x - (float)(class_rand(20,100)), ground };
+			if (army[i].start.x < hero_x)
+			{
+				if (army[i].start.y > hero_y)
+					return PROT_POINT{ army[i].start.x + (float)(class_rand(20, 100)), sky };
+				else if (army[i].start.y < hero_y)
+					return PROT_POINT{ army[i].start.x + (float)(class_rand(20, 100)), ground };
+			}
+			else if (army[i].start.x > hero_x)
+			{
+
+				if (army[i].start.y > hero_y)
+					return PROT_POINT{ army[i].start.x - (float)(class_rand(20, 100)), sky };
+				else if (army[i].start.y < hero_y)
+					return PROT_POINT{ army[i].start.x - (float)(class_rand(20, 100)), ground };
+			}
 			else
 			{
-				if (army[i].start.y > hero_y)return PROT_POINT{ army[i].start.x, sky };
-				else if (army[i].start.y < hero_y) return PROT_POINT{ army[i].start.x, ground };
-				else return PROT_POINT{ hero_x, hero_y };
+				if (army[i].start.y > hero_y)return PROT_POINT{ hero_x, sky };
+				else if (army[i].start.y < hero_y) return PROT_POINT{ hero_x, ground };
 			}
 		}
 	}
